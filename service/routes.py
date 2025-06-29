@@ -69,28 +69,43 @@ def create_accounts():
 ######################################################################
 
 @app.route("/accounts/<int:account_id>", methods=["GET"])
-def read_account(account_id: int):
-    """ Read an account depending on supplied ID """
-    app.logger.info("Request to read an account")
+def read_account(account_id):
+    """
+    Read an Account
+    This endpoint will read an Account based on the provided account_id
+    """
+    app.logger.info("Request to read an Account with id: %s", account_id)
+
     account = Account.find(account_id)
+    if not account:
+        abort(status.HTTP_404_NOT_FOUND, f"Account with id [{account_id}] could not be found.")
 
-    if account is None:
-        app.logger.info("No account with ID %s found.", account_id)
-        response_status = status.HTTP_404_NOT_FOUND
-        message = f"Status Code: {response_status}"
-    else:
-        app.logger.info("Account with ID %s found.", account_id)
-        response_status = status.HTTP_200_OK
-        message = account.serialize()
-
-    return jsonify(message), response_status
+    return account.serialize(), status.HTTP_200_OK
 
 
 ######################################################################
 # UPDATE AN EXISTING ACCOUNT
 ######################################################################
 
-# ... place you code here to UPDATE an account ...
+@app.route("/accounts/<int:account_id>", methods=["PUT"])
+def update_account(account_id):
+    """
+    Update an existing Account
+    This endpoint will update an existing Account based on provided account info and account_id
+    """
+    app.logger.info("Request to update account with account_id: %s", account_id)
+    check_content_type("application/json")
+
+    account = Account.find(account_id)
+    if not account:
+        abort(status.HTTP_404_NOT_FOUND, f"Account with id [{account_id}] could not be found.")
+
+    update_account = Account()
+    update_account.deserialize(request.get_json())
+    update_account.id = account_id
+    update_account.update()
+
+    return jsonify(update_account.serialize()), status.HTTP_200_OK
 
 
 ######################################################################
